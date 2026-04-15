@@ -299,12 +299,24 @@ goto :menu
 :: ==============================================================================
 :usuarios
 cls
-echo --- Usuarios Conectados ---
-echo [%date% %time%] - Usuarios na sessao (query user) >> "%LOGFILE%"
-query user > "%temp%\resultado_ti.txt"
-type "%temp%\resultado_ti.txt"
-type "%temp%\resultado_ti.txt" >> "%LOGFILE%"
+echo --- Gerenciamento de Usuarios Conectados ---
 echo.
+:: Mostra a lista de usuarios e seus IDs
+query user
+echo.
+echo =======================================================
+echo Digite o numero do "ID" da sessao que deseja derrubar.
+echo (Ou digite 0 para cancelar e voltar ao menu)
+echo =======================================================
+set /p id_sessao="Sessao a derrubar: "
+
+:: Se o usuario digitar 0, volta para o menu
+if "%id_sessao%"=="0" goto :menu
+
+:: Executa o comando para derrubar o usuario pelo ID
+logoff %id_sessao%
+echo.
+echo Sessao %id_sessao% encerrada com sucesso!
 pause
 goto :menu
 
