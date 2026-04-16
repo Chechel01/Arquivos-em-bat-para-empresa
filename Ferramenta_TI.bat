@@ -296,29 +296,33 @@ goto :menu
 :: ==============================================================================
 :: [12] USUÁRIOS CONECTADOS
 :: Mostra quais perfis do Windows possuem sessões abertas no momento da execução.
+:: Permite derrubar várias sessões em sequência sem sair da tela.
 :: ==============================================================================
 :usuarios
 cls
 echo --- Gerenciamento de Usuarios Conectados ---
 echo.
-:: Mostra a lista de usuarios e seus IDs
+:: Mostra a lista atualizada de usuarios e seus IDs
 query user
 echo.
 echo =======================================================
 echo Digite o numero do "ID" da sessao que deseja derrubar.
-echo (Ou digite 0 para cancelar e voltar ao menu)
+echo (Ou digite 0 para concluir e voltar ao menu principal)
 echo =======================================================
 set /p id_sessao="Sessao a derrubar: "
 
-:: Se o usuario digitar 0, volta para o menu
+:: Se o usuario digitar 0, sai do loop e volta para o menu
 if "%id_sessao%"=="0" goto :menu
 
 :: Executa o comando para derrubar o usuario pelo ID
 logoff %id_sessao%
 echo.
 echo Sessao %id_sessao% encerrada com sucesso!
-pause
-goto :menu
+echo Pressione qualquer tecla para atualizar a lista...
+pause >nul
+
+:: Volta para o início do bloco de usuários em vez do menu principal
+goto :usuarios
 
 :: ==============================================================================
 :: [13] DIAGNÓSTICO COMPLETO
