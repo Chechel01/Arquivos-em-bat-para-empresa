@@ -1,0 +1,276 @@
+@echo off
+chcp 65001 >nul
+color 0A
+title Ferramenta de Diagnostico e Manutencao de Sistema
+
+net session >nul 2>&1
+if %errorLevel% == 0 (
+    goto :menu
+) else (
+    echo =======================================================
+    echo ERRO: ESTE SCRIPT PRECISA SER EXECUTADO COMO ADMINISTRADOR!
+    echo =======================================================
+    pause
+    exit
+)
+
+:menu
+cls
+echo =======================================================
+echo           PAINEL DE MANUTENCAO E DIAGNOSTICO
+echo =======================================================
+echo [1]  Limpeza de arquivos temporarios e Lixeira
+echo [2]  Limpeza de cache DNS
+echo [3]  Reset de rede completo
+echo [4]  Verificacao de IP (Detalhada)
+echo [5]  SFC (Corrigir arquivos do Windows)
+echo [6]  CHKDSK (Verificar e corrigir disco C:)
+echo [7]  DISM (Reparar imagem do sistema)
+echo [8]  Teste de conectividade (Ping)
+echo [9]  Reset do Windows Update
+echo [10] Monitoramento de portas (Netstat)
+echo [11] Listagem de processos ativos
+echo [12] Usuarios conectados na sessao
+echo [13] Diagnostico completo de rede
+echo [14] Limpeza geral automatizada
+echo [15] Apagar perfil de usuario (Regedit e Disco)
+echo [16] Sair
+echo =======================================================
+set /p opcao="Escolha uma opcao (1-16): "
+
+if "%opcao%"=="1" goto :temp
+if "%opcao%"=="2" goto :dns
+if "%opcao%"=="3" goto :reset_rede
+if "%opcao%"=="4" goto :ip
+if "%opcao%"=="5" goto :sfc
+if "%opcao%"=="6" goto :chkdsk
+if "%opcao%"=="7" goto :dism
+if "%opcao%"=="8" goto :ping
+if "%opcao%"=="9" goto :wupdate
+if "%opcao%"=="10" goto :portas
+if "%opcao%"=="11" goto :processos
+if "%opcao%"=="12" goto :usuarios
+if "%opcao%"=="13" goto :diagnostico
+if "%opcao%"=="14" goto :limpeza_geral
+if "%opcao%"=="15" goto :apagar_perfil
+if "%opcao%"=="16" exit
+goto :menu
+
+:temp
+cls
+echo --- Limpando Arquivos Temporarios e Lixeira ---
+echo 1. Limpando Temp do Sistema...
+del /q /f /s C:\Windows\Temp\* >nul 2>&1
+
+echo 2. Limpando Temp de todos os usuarios...
+for /d %%x in (C:\Users\*) do (
+    if exist "%%x\AppData\Local\Temp" (
+        del /q /f /s "%%x\AppData\Local\Temp\*" >nul 2>&1
+    )
+)
+
+echo 3. Esvaziando Lixeira em todos os discos principais...
+for %%D in (C D) do (
+    if exist %%D:\$Recycle.bin (
+        rd /s /q %%D:\$Recycle.bin >nul 2>&1
+    )
+)
+echo.
+echo Limpeza concluida!
+pause
+goto :menu
+
+:dns
+cls
+echo --- Limpando Cache DNS ---
+ipconfig /flushdns
+echo.
+echo Cache DNS limpo!
+pause
+goto :menu
+
+:reset_rede
+cls
+echo --- Resetando Configuracoes de Rede ---
+echo Aguarde, reconfigurando a rede...
+ipconfig /release
+ipconfig /renew
+netsh winsock reset
+netsh int ip reset
+echo.
+echo Reset concluido. E recomendavel reiniciar o computador depois.
+pause
+goto :menu
+
+:ip
+cls
+echo --- Informacoes de IP ---
+ipconfig /all
+echo.
+pause
+goto :menu
+
+:sfc
+cls
+echo --- Executando System File Checker (SFC) ---
+echo Isso pode demorar alguns minutos...
+sfc /scannow
+echo.
+pause
+goto :menu
+
+:chkdsk
+cls
+echo --- Agendando CHKDSK para o Disco C: ---
+echo O CHKDSK nao pode ser executado com o Windows em uso.
+echo Pressione Y (Sim) na proxima tela para agendar para a proxima inicializacao.
+chkdsk C: /f /r
+pause
+goto :menu
+
+:dism
+cls
+echo --- Executando DISM ---
+echo Reparando a imagem do sistema. Isso pode demorar bastante...
+DISM /Online /Cleanup-Image /RestoreHealth
+echo.
+pause
+goto :menu
+
+:ping
+cls
+echo --- Teste de Conectividade ---
+echo Pingando DNS do Google (8.8.8.8)...
+ping 8.8.8.8
+echo.
+echo Pingando dominio (google.com)...
+ping google.com
+echo.
+pause
+goto :menu
+
+:wupdate
+cls
+echo --- Resetando o Windows Update ---
+echo Parando servicos e limpando pastas corrompidas...
+net stop wuauserv >nul 2>&1
+net stop cryptSvc >nul 2>&1
+net stop bits >nul 2>&1
+net stop msiserver >nul 2>&1
+ren C:\Windows\SoftwareDistribution SoftwareDistribution.old >nul 2>&1
+ren C:\Windows\System32\catroot2 catroot2.old >nul 2>&1
+net start wuauserv >nul 2>&1
+net start cryptSvc >nul 2>&1
+net start bits >nul 2>&1
+net start msiserver >nul 2>&1
+echo.
+echo Componentes do Windows Update resetados com sucesso!
+pause
+goto :menu
+
+:portas
+cls
+echo --- Monitoramento de Portas ---
+netstat -ano
+echo.
+pause
+goto :menu
+
+:processos
+cls
+echo --- Processos em Execucao ---
+tasklist
+echo.
+pause
+goto :menu
+
+:usuarios
+cls
+echo --- Gerenciamento de Usuarios Conectados ---
+echo.
+query user
+echo.
+echo =======================================================
+echo Digite o numero do "ID" da sessao que deseja derrubar.
+echo (Ou digite 0 para concluir e voltar ao menu principal)
+echo =======================================================
+set /p id_sessao="Sessao a derrubar: "
+
+if "%id_sessao%"=="" goto :usuarios
+if "%id_sessao%"=="0" goto :menu
+
+logoff %id_sessao%
+echo.
+echo Sessao %id_sessao% encerrada com sucesso!
+echo Pressione qualquer tecla para atualizar a lista...
+pause >nul
+goto :usuarios
+
+:diagnostico
+cls
+echo --- Diagnostico Completo de Rede ---
+echo 1. Teste de Ping
+ping 8.8.8.8 -n 4
+echo.
+echo 2. Rota de Tracert para DNS Google
+tracert -d -h 10 8.8.8.8
+echo.
+echo 3. Status da Interface de Rede
+netsh interface show interface
+echo.
+pause
+goto :menu
+
+:limpeza_geral
+cls
+echo --- Iniciando Limpeza Geral Automatizada ---
+echo 1. Limpando Temp do Sistema...
+del /q /f /s C:\Windows\Temp\* >nul 2>&1
+
+echo 2. Limpando Temp de todos os usuarios...
+for /d %%x in (C:\Users\*) do (
+    if exist "%%x\AppData\Local\Temp" (
+        del /q /f /s "%%x\AppData\Local\Temp\*" >nul 2>&1
+    )
+)
+
+echo 3. Esvaziando Lixeira em todos os discos principais...
+for %%D in (C D) do (
+    if exist %%D:\$Recycle.bin (
+        rd /s /q %%D:\$Recycle.bin >nul 2>&1
+    )
+)
+
+echo 4. Limpando Cache DNS...
+ipconfig /flushdns >nul 2>&1
+
+echo.
+echo Limpeza Geral concluida com sucesso!
+pause
+goto :menu
+
+:apagar_perfil
+cls
+echo --- Apagar Perfil de Usuario (Regedit e Disco) ---
+echo.
+echo Lista de perfis carregados nesta maquina:
+wmic path win32_userprofile where "Special=False" get LocalPath
+echo.
+echo =======================================================
+echo Digite APENAS O NOME do usuario (a ultima parte do caminho)
+echo que deseja apagar. Exemplo: se for C:\Users\Joao, digite Joao
+echo (Ou digite 0 para cancelar e voltar ao menu)
+echo =======================================================
+set /p apagar_user="Nome do usuario a deletar: "
+
+if "%apagar_user%"=="" goto :apagar_perfil
+if "%apagar_user%"=="0" goto :menu
+
+echo.
+echo Apagando chave de registro e pasta de %apagar_user%...
+wmic path win32_userprofile where "localpath like '%%\\%apagar_user%'" delete >nul 2>&1
+echo.
+echo Processo concluido!
+echo Pressione qualquer tecla para atualizar a lista...
+pause >nul
+goto :apagar_perfil
